@@ -16,5 +16,5 @@ type Package struct {
 }
 
 func (p Package) Translate() error {
-
+	return nil
 }
