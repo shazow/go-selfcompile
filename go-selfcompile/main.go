@@ -44,14 +44,20 @@ func detectGOROOT() (string, error) {
 
 func inputConfigs(goroot string) []bindata.InputConfig {
 	return []bindata.InputConfig{
-		bindata.InputConfig{
-			Path:      filepath.Join(goroot, "bin", "go"),
-			Recursive: false,
-		},
+		// Minimum artifacts required for `go build` to work.
+		// See: https://github.com/shazow/go-selfcompile/issues/2
 		bindata.InputConfig{
 			Path:      filepath.Join(goroot, "src"),
 			Recursive: true,
 		},
+		bindata.InputConfig{
+			Path:      filepath.Join(goroot, "pkg", "include"),
+			Recursive: true,
+		},
+		bindata.InputConfig{Path: filepath.Join(goroot, "pkg", "tool", "asm")},
+		bindata.InputConfig{Path: filepath.Join(goroot, "pkg", "tool", "compile")},
+		bindata.InputConfig{Path: filepath.Join(goroot, "pkg", "tool", "link")},
+		bindata.InputConfig{Path: filepath.Join(goroot, "bin", "go")},
 	}
 }
 
