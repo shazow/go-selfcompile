@@ -1,2 +1,3 @@
 *_selfcompile.go
-example/abinary/abinary
+/example/abinary/abinary
+/go-selfcompile/go-selfcompile

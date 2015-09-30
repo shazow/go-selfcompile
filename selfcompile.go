@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-const srcdir = "_src"
+const srcdir = "_self"
 const vendordir = "_vendor"
 const pluginfile = "plugin_selfcompile.go"
 const tmpprefix = "go-selfcompile"
@@ -53,22 +53,27 @@ func (c *SelfCompile) Compile() error {
 	}
 	//defer c.cleanup() // TODO: Handle cleanup error
 
-	logger.Println("Compiling workdir:", c.workdir)
-
-	// FIXME: Default to env = os.Environ()?
-	env := []string{
-		fmt.Sprintf("GOROOT=%s", c.workdir),
-		fmt.Sprintf("GOPATH=%s", c.vendordir),
-	}
-
 	if c.Install == "" {
 		// TODO: Handle bundled source if c.Install is not defined
 		return errors.New("not implemented: Bundled source, must specify Install target.")
 	}
 
+	logger.Println("Compiling workdir:", c.workdir)
+
+	return c.goRun("get", "-v", c.Install) // TODO: Strip -v
+}
+
+func (c *SelfCompile) goRun(args ...string) error {
+	// FIXME: Default to env = os.Environ()?
+	env := []string{
+		os.Getenv("PATH"),
+		fmt.Sprintf("GOROOT=%s", c.workdir),
+		fmt.Sprintf("GOPATH=%s", c.vendordir),
+	}
+
 	cmd := exec.Cmd{
-		Path: filepath.Join(c.workdir, "src", "go"),
-		Args: []string{"go", "get", "-v", c.Install},
+		Path: filepath.Join(c.workdir, "bin", "go"),
+		Args: append([]string{"go"}, args...),
 		Env:  env,
 		Dir:  c.workdir,
 
@@ -116,8 +121,14 @@ func (c *SelfCompile) setup() error {
 	if err != nil {
 		return err
 	}
-	c.srcdir = filepath.Join(c.workdir, srcdir)
+
 	c.vendordir = filepath.Join(c.workdir, vendordir)
+	if c.Install == "" {
+		// Assume we embedded the source
+		c.srcdir = filepath.Join(c.workdir, srcdir)
+	} else {
+		c.srcdir = filepath.Join(c.vendordir, c.Install)
+	}
 
 	// Restore all the assets recursively
 	err = c.RestoreAssets(c.workdir, "")
@@ -125,7 +136,15 @@ func (c *SelfCompile) setup() error {
 		return err
 	}
 
-	// Generate plugin stubs
+	if c.Install != "" {
+		// Fetch source
+		err := c.goRun("get", "-d", "-v", c.Install) // TODO: Strip -v
+		if err != nil {
+			return err
+		}
+	}
+
+	// Generate plugin stubs in srcdir
 	err = c.stubPlugins()
 	if err != nil {
 		return err
