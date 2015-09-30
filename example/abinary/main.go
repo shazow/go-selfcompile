@@ -15,6 +15,7 @@ func main() {
 	if plugin != "" {
 		fmt.Println("Installing plugin: ", plugin)
 		c := selfcompile.SelfCompile{
+			Install:       "github.com/shazow/go-selfcompile/example/abinary",
 			RestoreAssets: RestoreAssets,
 		}
 		c.Plugin(plugin)

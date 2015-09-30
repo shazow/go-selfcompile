@@ -3,8 +3,10 @@ package selfcompile
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -22,6 +24,9 @@ type RestoreAssets func(dir, name string) error
 type SelfCompile struct {
 	pkg     string // Package to use for plugins (empty will default to "main")
 	plugins []string
+
+	// Main package source URL to install on recompile (if not bundled).
+	Install string
 
 	// Parameters used to setup the temporary workdir.
 	Prefix    string // Prefix for TempDir, used to stage recompiling assets.
@@ -47,8 +52,29 @@ func (c *SelfCompile) Compile() error {
 		return err
 	}
 	//defer c.cleanup() // TODO: Handle cleanup error
-	// TODO: ...
-	return nil
+
+	// FIXME: Default to env = os.Environ()?
+	env := []string{
+		fmt.Sprintf("GOROOT=%s", c.workdir),
+		fmt.Sprintf("GOPATH=%s", c.vendordir),
+	}
+
+	if c.Install == "" {
+		// TODO: Handle bundled source if c.Install is not defined
+		return errors.New("not implemented: Bundled source, must specify Install target.")
+	}
+
+	cmd := exec.Cmd{
+		Path: filepath.Join(c.workdir, "src", "go"),
+		Args: []string{"go", "get", "-v", c.Install},
+		Env:  env,
+		Dir:  c.workdir,
+
+		// TODO: Eat outputs and do something with them?
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}
+	return cmd.Run()
 }
 
 // stubPlugins will generate import stub files for the registered plugins.
