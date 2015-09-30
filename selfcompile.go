@@ -53,6 +53,8 @@ func (c *SelfCompile) Compile() error {
 	}
 	//defer c.cleanup() // TODO: Handle cleanup error
 
+	logger.Println("Compiling workdir:", c.workdir)
+
 	// FIXME: Default to env = os.Environ()?
 	env := []string{
 		fmt.Sprintf("GOROOT=%s", c.workdir),

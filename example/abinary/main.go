@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/shazow/go-selfcompile"
 )
@@ -11,6 +12,8 @@ func main() {
 	var plugin string
 	flag.StringVar(&plugin, "plugin", "", "plugin to install")
 	flag.Parse()
+
+	selfcompile.SetLogger(os.Stderr)
 
 	if plugin != "" {
 		fmt.Println("Installing plugin: ", plugin)
