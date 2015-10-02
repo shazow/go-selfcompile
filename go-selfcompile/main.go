@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -40,7 +41,7 @@ func goEnv() (map[string]string, error) {
 	return env, in.Err()
 }
 
-func inputConfigs(goroot string, gotooldir string) []bindata.InputConfig {
+func goInputs(goroot string, gotooldir string) []bindata.InputConfig {
 	return []bindata.InputConfig{
 		// Minimum artifacts required for `go build` to work.
 		// See: https://github.com/shazow/go-selfcompile/issues/2
@@ -64,9 +65,22 @@ func exit(code int, msg string) {
 	os.Exit(code)
 }
 
+type options struct {
+	Debug      bool
+	SkipSource bool
+	Out        string
+}
+
 func main() {
+	opts := options{}
+	flag.BoolVar(&opts.Debug, "debug", false, "load assets from disk (instead of embedding in binary)")
+	flag.BoolVar(&opts.SkipSource, "skip-source", false, "skip embedding package (will have to specify SelfCompile.Install target)")
+	flag.StringVar(&opts.Out, "out", "bindata_selfcompile.go", "write bindata to this file")
+	flag.Parse()
+
 	cfg := bindata.NewConfig()
-	cfg.Output = "bindata_selfcompile.go"
+	cfg.Output = opts.Out
+	cfg.Debug = opts.Debug
 
 	env, err := goEnv()
 	if err != nil {
@@ -84,8 +98,14 @@ func main() {
 	}
 
 	// Default paths
-	cfg.Input = inputConfigs(goroot, gotooldir)
+	cfg.Input = goInputs(goroot, gotooldir)
 	cfg.Prefix = goroot
+
+	if !opts.SkipSource {
+		// Append source to cfg.Input with some default ignore settings.
+		// TODO: ...
+		exit(2, fmt.Sprintf("not implemented yet: embedding source"))
+	}
 
 	err = bindata.Translate(cfg)
 	if err != nil {
