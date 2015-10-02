@@ -28,6 +28,9 @@ type SelfCompile struct {
 	// Main package source URL to install on recompile (if not bundled).
 	Install string
 
+	// Don't delete the temporary workdir after compiling. Used for debugging.
+	SkipCleanup bool
+
 	// Parameters used to setup the temporary workdir.
 	Prefix    string // Prefix for TempDir, used to stage recompiling assets.
 	Root      string // Root of TempDir (empty will use OS default).
@@ -46,12 +49,16 @@ func (c *SelfCompile) Plugin(p string) {
 }
 
 // Compile will recompile the program's source with the registered plugins.
-func (c *SelfCompile) Compile() error {
-	err := c.setup()
+func (c *SelfCompile) Compile() (err error) {
+	err = c.setup()
 	if err != nil {
 		return err
 	}
-	//defer c.cleanup() // TODO: Handle cleanup error
+	if !c.SkipCleanup {
+		defer func() {
+			err = combineErrors(c.cleanup(), err)
+		}()
+	}
 
 	if c.Install == "" {
 		// TODO: Handle bundled source if c.Install is not defined
