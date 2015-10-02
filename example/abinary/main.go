@@ -1,3 +1,4 @@
+//go:generate go-selfcompile --skip-source
 package main
 
 import (
@@ -22,9 +23,12 @@ func main() {
 			RestoreAssets: RestoreAssets,
 		}
 		c.Plugin(plugin)
-		err := c.Compile()
-		if err != nil {
-			fmt.Println("Error: ", err.Error())
+		if err := c.Compile(); err != nil {
+			fmt.Println("Compile failed: ", err.Error())
+			return
+		}
+		if err := c.Cleanup(); err != nil {
+			fmt.Println("Cleanup failed: ", err.Error())
 			return
 		}
 		fmt.Println("Success.")

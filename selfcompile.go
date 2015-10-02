@@ -28,8 +28,8 @@ type SelfCompile struct {
 	// Main package source URL to install on recompile (if not bundled).
 	Install string
 
-	// Don't delete the temporary workdir after compiling. Used for debugging.
-	SkipCleanup bool
+	// Automatically call SelfCompile.Cleanup() after Compile() is done.
+	AutoCleanup bool
 
 	// Parameters used to setup the temporary workdir.
 	Prefix    string // Prefix for TempDir, used to stage recompiling assets.
@@ -52,28 +52,30 @@ func (c *SelfCompile) Plugin(p string) {
 func (c *SelfCompile) Compile() (err error) {
 	err = c.setup()
 	if err != nil {
-		return err
+		return
 	}
-	if !c.SkipCleanup {
+	if c.AutoCleanup {
 		defer func() {
-			err = combineErrors(c.cleanup(), err)
+			err = combineErrors(c.Cleanup(), err)
 		}()
 	}
 
 	if c.Install == "" {
 		// TODO: Handle bundled source if c.Install is not defined
-		return errors.New("not implemented: Bundled source, must specify Install target.")
+		err = errors.New("not implemented: Bundled source, must specify Install target.")
+		return
 	}
 
 	logger.Println("Compiling workdir:", c.workdir)
 
-	return c.goRun("get", "-v", c.Install) // TODO: Strip -v
+	err = c.goRun("get", c.Install)
+	return
 }
 
 func (c *SelfCompile) goRun(args ...string) error {
 	// FIXME: Default to env = os.Environ()?
 	env := []string{
-		os.Getenv("PATH"),
+		fmt.Sprintf("PATH=%s", os.Getenv("PATH")),
 		fmt.Sprintf("GOROOT=%s", c.workdir),
 		fmt.Sprintf("GOPATH=%s", c.vendordir),
 	}
@@ -128,13 +130,14 @@ func (c *SelfCompile) setup() error {
 	if err != nil {
 		return err
 	}
+	logger.Printf("Initializing workdir: %s", c.workdir)
 
 	c.vendordir = filepath.Join(c.workdir, vendordir)
 	if c.Install == "" {
 		// Assume we embedded the source
 		c.srcdir = filepath.Join(c.workdir, srcdir)
 	} else {
-		c.srcdir = filepath.Join(c.vendordir, c.Install)
+		c.srcdir = filepath.Join(c.vendordir, "src", c.Install)
 	}
 
 	// Restore all the assets recursively
@@ -145,7 +148,7 @@ func (c *SelfCompile) setup() error {
 
 	if c.Install != "" {
 		// Fetch source
-		err := c.goRun("get", "-d", "-v", c.Install) // TODO: Strip -v
+		err := c.goRun("get", "-d", c.Install)
 		if err != nil {
 			return err
 		}
@@ -160,12 +163,13 @@ func (c *SelfCompile) setup() error {
 	return nil
 }
 
-// cleanup will delete any temporary files created for the workdir, good idea to
+// Cleanup will delete any temporary files created for the workdir, good idea to
 // call this as a defer after calling setup().
-func (c *SelfCompile) cleanup() error {
+func (c *SelfCompile) Cleanup() error {
 	if c.workdir == "" {
 		// No workdir setup, nothing to clean up.
 		return nil
 	}
+	logger.Printf("Cleaning up: %s", c.workdir)
 	return os.RemoveAll(c.workdir)
 }

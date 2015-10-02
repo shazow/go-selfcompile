@@ -29,7 +29,7 @@ func (p plugin) WriteTo(w io.Writer) (int64, error) {
 	if len(p.Imports) == 0 {
 		return 0, errMissingImport
 	}
-	n, err := fmt.Fprintf(w, tmplPlugin, p.Package)
+	n, err := fmt.Fprintf(w, tmplPlugin, pkg)
 	if err != nil {
 		return int64(n), err
 	}
