@@ -15,6 +15,8 @@ import (
 	"github.com/jteeuwen/go-bindata"
 )
 
+var version = "dev"
+
 var errDetectGoRoot = errors.New("failed to detect GOROOT")
 
 func goEnv() (map[string]string, error) {
@@ -66,17 +68,23 @@ func exit(code int, msg string) {
 }
 
 type options struct {
-	Debug      bool
-	SkipSource bool
-	Out        string
+	ShowVersion bool
+	Debug       bool
+	SkipSource  bool
+	Out         string
 }
 
 func main() {
 	opts := options{}
+	flag.BoolVar(&opts.ShowVersion, "version", false, "print version and exit")
 	flag.BoolVar(&opts.Debug, "debug", false, "load assets from disk (instead of embedding in binary)")
 	flag.BoolVar(&opts.SkipSource, "skip-source", false, "skip embedding package (will have to specify SelfCompile.Install target)")
 	flag.StringVar(&opts.Out, "out", "bindata_selfcompile.go", "write bindata to this file")
 	flag.Parse()
+
+	if opts.ShowVersion {
+		exit(0, fmt.Sprintf("version %s", version))
+	}
 
 	cfg := bindata.NewConfig()
 	cfg.Output = opts.Out
