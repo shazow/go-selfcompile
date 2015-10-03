@@ -12,7 +12,7 @@ example-aplugin: example-abinary
 test:
 	go test .
 
-$(BUILD)/go-selfcompile: $(SOURCES)
+$(BUILD)/go-selfcompile: $(BUILD) $(SOURCES)
 	go build -ldflags "-X main.version='$(VERSION)'" -o "$@" ./go-selfcompile/...
 
 example/abinary/bindata_selfcompile.go: $(BUILD)/go-selfcompile
@@ -22,7 +22,7 @@ $(BUILD)/example-abinary: example/abinary/bindata_selfcompile.go
 	go build -o "$@" ./example/abinary/...
 
 $(BUILD):
-	mkdir $@
+	mkdir -p $@
 
 clean:
 	rm -fr $(BUILD)
