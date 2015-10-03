@@ -1,4 +1,4 @@
-//go:generate go-selfcompile --skip-source
+//go:generate go-selfcompile
 package main
 
 import (
@@ -12,9 +12,20 @@ import (
 func main() {
 	var plugin string
 	flag.StringVar(&plugin, "plugin", "", "plugin to install")
-	flag.Parse()
 
+	var printBundled bool
+	flag.BoolVar(&printBundled, "bundled", false, "print bundled assets and exit")
+
+	flag.Parse()
 	selfcompile.SetLogger(os.Stderr)
+
+	if printBundled {
+		fmt.Println("Embedded assets:")
+		for _, name := range AssetNames() {
+			fmt.Println(" *", name)
+		}
+		return
+	}
 
 	if plugin != "" {
 		fmt.Println("Installing plugin: ", plugin)
@@ -24,11 +35,11 @@ func main() {
 		}
 		c.Plugin(plugin)
 		if err := c.Compile(); err != nil {
-			fmt.Println("Compile failed: ", err.Error())
+			fmt.Println("Compile failed:", err.Error())
 			return
 		}
 		if err := c.Cleanup(); err != nil {
-			fmt.Println("Cleanup failed: ", err.Error())
+			fmt.Println("Cleanup failed:", err.Error())
 			return
 		}
 		fmt.Println("Success.")
