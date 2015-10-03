@@ -30,12 +30,16 @@ call to `SelfCompile.Compile()`!
 
 ## How does it work?
 
+### Plugins
+
 Let's start with plugins: We define a *plugin* as a package which does something
 inside `init() { ... }`. Your system would provide some way for plugins to
 register themselves on init, then all you'll need to do is import them and off
 you go.
 
 Example of a plugin: [example/aplugin](https://github.com/shazow/go-selfcompile/tree/master/example/aplugin)
+
+### Self-compiling Binary
 
 Next, to use go-selfcompile in your binary you'll need to do two things:
 
@@ -68,7 +72,9 @@ Next, to use go-selfcompile in your binary you'll need to do two things:
     if err := c.Cleanup(); err != nil { ... }
     ```
 
-    Example of a self-compiling binary: [example/abinary](https://github.com/shazow/go-selfcompile/tree/master/example/abinary)
+Example of a self-compiling binary: [example/abinary](https://github.com/shazow/go-selfcompile/tree/master/example/abinary)
+
+### Examples
 
 If you're trying out the built-in examples, it will look something like this:
 
@@ -90,6 +96,10 @@ Just doing binary things
 ```
 
 Fancy, right?
+
+## Developing
+
+There's an end-to-end integration flow setup in the `Makefile`. You can run it with `make example-aplugin`.
 
 
 ## Sponsors
