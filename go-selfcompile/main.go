@@ -95,7 +95,6 @@ func main() {
 
 	cfg := bindata.NewConfig()
 	cfg.Output = opts.Out
-	cfg.Debug = true // Assets don't need to be bundled in source, only in the built binary.
 
 	env, err := goEnv()
 	if err != nil {
