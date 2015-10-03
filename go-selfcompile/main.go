@@ -62,6 +62,15 @@ func goInputs(goroot string, gotooldir string) []bindata.InputConfig {
 	}
 }
 
+// selfPath returns the path of the current running process's binary.
+func selfPath() (string, error) {
+	path, err := exec.LookPath(os.Args[0])
+	if err == nil && path != "" {
+		return path, err
+	}
+	return filepath.Abs(os.Args[0])
+}
+
 func exit(code int, msg string) {
 	fmt.Fprintf(os.Stderr, "go-selfcompile: %s\n", msg)
 	os.Exit(code)
@@ -69,7 +78,6 @@ func exit(code int, msg string) {
 
 type options struct {
 	ShowVersion bool
-	Debug       bool
 	SkipSource  bool
 	Out         string
 }
@@ -77,7 +85,6 @@ type options struct {
 func main() {
 	opts := options{}
 	flag.BoolVar(&opts.ShowVersion, "version", false, "print version and exit")
-	flag.BoolVar(&opts.Debug, "debug", false, "load assets from disk (instead of embedding in binary)")
 	flag.BoolVar(&opts.SkipSource, "skip-source", false, "skip embedding package (will have to specify SelfCompile.Install target)")
 	flag.StringVar(&opts.Out, "out", "bindata_selfcompile.go", "write bindata to this file")
 	flag.Parse()
@@ -88,7 +95,7 @@ func main() {
 
 	cfg := bindata.NewConfig()
 	cfg.Output = opts.Out
-	cfg.Debug = opts.Debug
+	cfg.Debug = true // Assets don't need to be bundled in source, only in the built binary.
 
 	env, err := goEnv()
 	if err != nil {
@@ -105,9 +112,20 @@ func main() {
 		exit(1, fmt.Sprintf("failed detecting GOTOOLDIR"))
 	}
 
+	selfcompilePath, err := selfPath()
+	if err != nil {
+		exit(1, fmt.Sprintf("failed detecting path of go-selfcompile"))
+	}
+
 	// Default paths
-	cfg.Input = goInputs(goroot, gotooldir)
 	cfg.Prefix = goroot
+	cfg.Input = goInputs(goroot, gotooldir)
+
+	// Bundle go-selfcompile.
+	cfg.Input = append(cfg.Input, bindata.InputConfig{
+		Path: selfcompilePath,
+		Name: "bin/go-selfcompile",
+	})
 
 	if !opts.SkipSource {
 		// Append source to cfg.Input with some default ignore settings.

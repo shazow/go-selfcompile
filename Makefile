@@ -1,4 +1,4 @@
-BUILD = ./build
+BUILD = $$PWD/build
 VERSION = $(shell git describe --long --tags --dirty --always)
 SOURCES = $(wildcard *.go **/*.go)
 
@@ -16,7 +16,7 @@ $(BUILD)/go-selfcompile: $(SOURCES)
 	go build -ldflags "-X main.version='$(VERSION)'" -o "$@" ./go-selfcompile/...
 
 example/abinary/bindata_selfcompile.go: $(BUILD)/go-selfcompile
-	cd example/abinary/ && ../../$< --debug --skip-source
+	PATH=$(BUILD):$$PATH go generate ./example/abinary/
 
 $(BUILD)/example-abinary: example/abinary/bindata_selfcompile.go
 	go build -o "$@" ./example/abinary/...
@@ -25,4 +25,5 @@ $(BUILD):
 	mkdir $@
 
 clean:
-	rm -r $(BUILD)
+	rm -fr $(BUILD)
+	rm -f example/abinary/{bindata_selfcompile.go,abinary}

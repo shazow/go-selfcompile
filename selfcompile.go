@@ -74,14 +74,15 @@ func (c *SelfCompile) Compile() (err error) {
 
 func (c *SelfCompile) goRun(args ...string) error {
 	// FIXME: Default to env = os.Environ()?
+	binpath := filepath.Join(c.workdir, "bin")
 	env := []string{
-		fmt.Sprintf("PATH=%s", os.Getenv("PATH")),
+		fmt.Sprintf("PATH=%s:%s", binpath, os.Getenv("PATH")),
 		fmt.Sprintf("GOROOT=%s", c.workdir),
 		fmt.Sprintf("GOPATH=%s", c.vendordir),
 	}
 
 	cmd := exec.Cmd{
-		Path: filepath.Join(c.workdir, "bin", "go"),
+		Path: filepath.Join(binpath, "go"),
 		Args: append([]string{"go"}, args...),
 		Env:  env,
 		Dir:  c.workdir,
@@ -156,6 +157,12 @@ func (c *SelfCompile) setup() error {
 
 	// Generate plugin stubs in srcdir
 	err = c.stubPlugins()
+	if err != nil {
+		return err
+	}
+
+	// go generate
+	err = c.goRun("generate", c.Install)
 	if err != nil {
 		return err
 	}
