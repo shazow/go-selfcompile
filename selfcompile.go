@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -69,7 +70,34 @@ func (c *SelfCompile) Compile() (err error) {
 	logger.Println("Compiling workdir:", c.workdir)
 
 	err = c.goRun("get", c.Install)
+	if err != nil {
+		return err
+	}
+
+	self, err := selfPath()
+	if err != nil {
+		return err
+	}
+
+	logger.Println("Replacing binary:", self)
+	err = c.copyFile(filepath.Join(c.vendordir, "bin", filepath.Base(c.Install)), self)
 	return
+}
+
+func (c *SelfCompile) copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_TRUNC, 0777)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	// TODO: Use a buffered copy?
+	_, err = io.Copy(out, in)
+	return err
 }
 
 func (c *SelfCompile) goRun(args ...string) error {
@@ -179,4 +207,13 @@ func (c *SelfCompile) Cleanup() error {
 	}
 	logger.Printf("Cleaning up: %s", c.workdir)
 	return os.RemoveAll(c.workdir)
+}
+
+// selfPath returns the path of the current running process's binary.
+func selfPath() (string, error) {
+	path, err := exec.LookPath(os.Args[0])
+	if err == nil && path != "" {
+		return path, err
+	}
+	return filepath.Abs(os.Args[0])
 }
