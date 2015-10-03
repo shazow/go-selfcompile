@@ -4,7 +4,7 @@ notifications:
   email: false
 
 install:
-  - go get -v ./...
+  - go get -v ./
 
 script:
   - make test
