@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jteeuwen/go-bindata"
+	"github.com/shazow/go-bindata"
 )
 
 var version = "dev"
