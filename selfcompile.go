@@ -44,12 +44,14 @@ type SelfCompile struct {
 	RestoreAssets RestoreAssets
 }
 
-// Plugin registers a new plugin to self-compile
+// Plugin registers a plugin to self-compile. Make sure to register the full
+// set of plugins that need to be enabled during the compile, not just new
+// plugins.
 func (c *SelfCompile) Plugin(p string) {
 	c.plugins = append(c.plugins, p)
 }
 
-// Compile will recompile the program's source with the registered plugins.
+// Compile the program's source with the registered plugins.
 func (c *SelfCompile) Compile() (err error) {
 	err = c.setup()
 	if err != nil {
