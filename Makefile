@@ -18,7 +18,7 @@ $(BUILD)/go-selfcompile: $(BUILD) $(SOURCES)
 example/abinary/bindata_selfcompile.go: $(BUILD)/go-selfcompile
 	PATH=$(BUILD):$$PATH go generate ./example/abinary/
 
-$(BUILD)/example-abinary: example/abinary/bindata_selfcompile.go
+$(BUILD)/example-abinary: $(BUILD) example/abinary/bindata_selfcompile.go
 	go build -o "$@" ./example/abinary/...
 
 $(BUILD):

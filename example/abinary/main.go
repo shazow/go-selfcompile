@@ -1,4 +1,4 @@
-//go:generate go-selfcompile
+//go:generate go-selfcompile --skip-source
 package main
 
 import (
